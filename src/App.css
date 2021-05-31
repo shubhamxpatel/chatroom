@@ -1,38 +1,154 @@
 .App {
-  text-align: center;
+    text-align: center;
 }
 
 .App-logo {
-  height: 40vmin;
-  pointer-events: none;
+    height: 40vmin;
+    pointer-events: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
+}
+
+p {
+    word-wrap: break-word;
+}
+
+strong {
+    color: blue;
+}
+
+button {
+    margin: 3px;
+}
+
+form {
+    margin: 5px;
+}
+
+input {
+    margin: 5px;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+.box {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 70% 30%;
+    grid-template-rows: 100%;
+}
+
+.fontawesome {
+    color: red;
+    font-size: 40px;
+    visibility: 0.7;
+}
+
+.fontawesome:hover {
+    visibility: 1;
+    cursor: pointer;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    margin-left: 0vw;
+    margin-top: 1vh;
+    width: 100vw;
+    height: 98vh;
+    background-color: rgb(61, 57, 57);
+    overflow: hidden;
+}
+
+#root {
+    margin-right: 0;
+}
+
+.videolist {
+    width: 25%;
+    margin: 0;
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.m-fadeOut {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s linear 300ms, opacity 300ms;
+}
+
+.m-fadeIn {
+    visibility: visible;
+    opacity: 1;
+    transition: visibility 0s linear 0s, opacity 300ms;
+}
+
+.hidden {
+    visibility: hidden;
 }
 
 .App-link {
-  color: #61dafb;
+    color: #61dafb;
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+video {
+    padding: 2%;
+    box-shadow: -2px -2px 20px 5px black;
+    width: 400px;
+}
+
+video::after {
+    content: "hello";
+    color: "green"
+}
+
+option:hover {
+    background-color: blue;
+    color: brown;
+    cursor: pointer;
+}
+
+@media screen and (max-width:960px) {
+    .videolist {
+        width: 33.33%;
+    }
+}
+
+@media screen and (max-width:480px) {
+    .videolist {
+        width: 50%;
+    }
+}
+
+@media screen and (max-width:240px) {
+    .videolist {
+        width: 100%;
+    }
 }
