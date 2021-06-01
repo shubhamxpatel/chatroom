@@ -5,66 +5,45 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-
-    <!-- Optional theme -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <style>
-        .fontawesome {
-            color: red;
-            font-size: 20px;
-            visibility: 0.7;
-        }
-        
-        .fontawesome:hover {
-            visibility: 1;
-            cursor: pointer;
-        }
-        
-        button:hover {
-            cursor: pointer;
-        }
-        
-        button {
-            background-color: blue;
-        }
-    </style>
     <title>Document</title>
 </head>
 
 <body>
+    <form method="dialog" onsubmit="createfile()">
+        <input type="file" name="file" id="file">
+        <input type="submit" value="submit">
+    </form>
+    <div id="div1">
 
-    <div class="col-12" style="display: flex;
-    
-    flex-wrap: wrap;
-    width: 100%;
-    background: #eee;
-   
-    text-align:center;">
-        <div class="col-lg-2 col-md-3 col-sm-4 col-6 p-0" style="padding: 10px;">
-            <video src="" controls style="width: 100%;"></video>
-        </div>
-        <div class="col-lg-2 col-md-3 col-sm-4 col-6 p-0" style="padding: 10px;">
-            <video src="" controls style="width: 100%;"></video>
-
-        </div>
-        <div class="col-lg-2 col-md-3 col-sm-4 col-6 p-0" style="padding: 10px;">
-            <video src="" controls style="width: 100%;"></video>
-        </div>
-        <div class="col-lg-2 col-md-3 col-sm-4 col-6 p-0" style="padding: 10px;">
-            <video src="" controls style="width: 100%;"></video>
-        </div>
-
-
-
-
-
+    </div>
 </body>
+<script>
+    function createfile() {
+        let file = document.getElementById('file').files[0]
+        console.log(file)
+        let reader = new FileReader()
+        reader.onload = () => {
+            let arr = new Uint8Array(reader.result.byteLength)
+            let p = new Uint8Array(reader.result)
+            p.forEach((item, index) => {
+                arr[index] = item
+            })
+            console.log(new Uint8Array(reader.result), arr)
+            let blob = new Blob([arr], {
+                type: file.type
+            })
+            console.log(URL.createObjectURL(blob))
+            let a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.innerText = file.name
+            document.getElementById('div1').appendChild(a)
+                // let b = document.createElement('a')
+                // b.href = URL.createObjectURL(new Blob(new Uint8Array(reader.result)))
+                // b.innerText = file.name
+                // document.getElementById('div1').appendChild(b)
+        }
+        reader.readAsArrayBuffer(file)
+    }
+</script>
 
 </html>

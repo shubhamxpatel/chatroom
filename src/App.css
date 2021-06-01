@@ -78,6 +78,14 @@ body {
     margin: 0;
 }
 
+.hovers {
+    opacity: .3;
+}
+
+.hovers:hover {
+    opacity: 1;
+}
+
 .App-header {
     background-color: #282c34;
     min-height: 100vh;
@@ -119,7 +127,7 @@ body {
 }
 
 video {
-    padding: 2%;
+    padding: 1%;
     box-shadow: -2px -2px 20px 5px black;
     width: 400px;
 }

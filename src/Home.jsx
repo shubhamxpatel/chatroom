@@ -23,6 +23,7 @@ var devices = {
     front:1,
     back:0
 }
+var receivedfiles={}
 
 console.log(caller1)
 
@@ -300,6 +301,54 @@ function call(rid) {
         //console.log(connection[rid].dc)
 
     }
+    function receivefiles(rid,name)
+    {
+        
+        let arr=[]
+        let receivedbuffer=new Uint8Array(receivedfiles[name][0].size)
+        let type=receivedfiles[name][0].type
+        
+        //console.log(receivedfiles[name],receivedfiles[name][0].size)
+        receivedfiles[name].sort((m,n)=>{return (m.seq>n.seq)?1:-1})
+        let i=0,j=0;
+        receivedfiles[name].forEach(x=>{
+            if(x.seq===i)
+            {//console.log(i)
+                for(let xr in x.file)
+                {
+                    receivedbuffer[j]=x.file[xr]
+                    //receivedbuffer.push(x.file.xr)
+                    j++;
+                    //console.log(xr)
+                }
+                i++;
+            }
+            else
+            {
+                delete receivedfiles[name]
+                return
+            }
+        })
+        //console.log(receivedbuffer)
+        let url=URL.createObjectURL(new Blob([receivedbuffer],{type:type}))
+        delete receivedfiles[name]
+        let p = document.createElement("p")
+        p.style.color = "green"
+        p.style.width = "90%"
+        p.style.marginLeft = "1%"
+        p.style.marginTop = "2px"
+        p.style.textAlign = 'left'
+        p.style.padding = "5px"
+        p.style.backgroundColor = "wheat"
+        p.style.borderRadius = "10px"
+        console.log('added at receive file function')
+        p.innerHTML = `<strong>By ${rid}:</strong><br><a href=${url} download=${name.split('$$$')[0]}>${name.split('$$$')[0]}</a>`
+            //connection[rid].dc.send(p.innerText)
+        document.getElementById('commentbox').appendChild(p);
+        document.getElementById('commentbox').scrollTop=document.getElementById('commentbox').scrollHeight-document.getElementById('commentbox').offsetHeight
+
+
+    }
     console.log(connection[rid].ondatachannel, connection[rid].dc)
     connection[rid].dc.onopen = function() {
         console.log('channel is open')
@@ -373,8 +422,29 @@ function call(rid) {
        close_connection(rid)
     }
     connection[rid].dc.onmessage = function(message) {
-        console.log(message.data)
-        let p = document.createElement("p")
+        //console.log(message.data,typeof(message.data))
+        try {
+            //console.log(JSON.parse(message.data))
+            let data=JSON.parse(message.data)
+            if(receivedfiles[data.name])
+            {
+                receivedfiles[data.name].push(data)
+                if(data.status===200)
+                {
+                    receivefiles(rid,data.name)
+                }
+            }
+            else
+            {
+                receivedfiles[data.name]=[]
+                receivedfiles[data.name].push(data)
+                if(data.status===200)
+                {
+                    receivefiles(rid,data.name)
+                }
+            }
+        } catch (error) {
+            let p = document.createElement("p")
         p.style.color = "green"
         p.style.width = "90%"
         p.style.marginLeft = "1%"
@@ -387,6 +457,9 @@ function call(rid) {
             //connection[rid].dc.send(p.innerText)
         document.getElementById('commentbox').appendChild(p);
         document.getElementById('commentbox').scrollTop=document.getElementById('commentbox').scrollHeight-document.getElementById('commentbox').offsetHeight
+        }
+        
+        
 
     }
 
@@ -654,56 +727,92 @@ function sendFile()
   // Handle 0 size files.
   let unique=`${file.name}$$$${new Date()}`
   let seqnum=0
-
+let all=[]
+if(document.getElementById('receiver').value==="")
+{
+    all=videos
+}
+else{
+    all.push(document.getElementById('receiver').value)
+}
   
   const chunkSize = 16200;
   let chunks=[]
   let fileReader = new FileReader();
   let offset = 0;
+  let p = document.createElement("p")
+    p.style.color = "red"
+    p.style.width = "90%"
+    p.style.textAlign = 'left'
+    p.style.marginLeft = "9%"
+    p.style.marginTop = "2px"
+    p.style.padding = "5px"
+    p.style.backgroundColor = "wheat"
+    p.style.borderRadius = "10px"
+    p.innerHTML = `<strong>To ${document.getElementById('receiver').value}: </strong><br><a  download=${file.name}>${file.name}</a>`
+    let div=document.createElement('div')
+    div.style.width="0%"
+    div.style.height="6px"
+    div.style.backgroundColor="red"
+    p.appendChild(div)
+    document.getElementById('commentbox').appendChild(p);
+        document.getElementById('commentbox').scrollTop=document.getElementById('commentbox').scrollHeight-document.getElementById('commentbox').offsetHeight
+        document.getElementById('file').value=""
   fileReader.addEventListener('error', error => console.error('Error reading file:', error));
   fileReader.addEventListener('abort', event => console.log('File reading aborted:', event));
   fileReader.addEventListener('load', e => {
-    console.log('FileRead.onload ', e);
+    //console.log('FileRead.onload ', e);
     let data={
         name:unique,
         seq:seqnum,
         status:206,
-        file:e.target.result
+        file:new Uint8Array(e.target.result),
+        size:file.size
     }
+    // let m=JSON.stringify({x:e.target.result})
+    // let x=new Uint8Array(e.target.result)
+    // let y=new ArrayBuffer(x.length)
+    // x.forEach((item,index)=>{y[index]=item})
+    //console.log(x,y)
+    //console.log()
+    
     if(offset+e.target.result.byteLength>=file.size)
     {
         data.status=200
     }
     chunks.push(e.target.result)
+    let data1=JSON.stringify(data)
     //connection[rid].dc.send(data);
+    all.forEach(rid=>{
+       // connection[rid].dc.send("hdvcbjks")
+        connection[rid].dc.send(data1)
+     })
     offset += e.target.result.byteLength;
+
+
     //sendProgress.value = offset;
     if (offset < file.size) {
         seqnum++;
-      readSlice(offset);
+        div.style.width=`${(offset/file.size)*100}%`
+        setTimeout(() => {
+            readSlice(offset);
+        }, 50);
+      
     }
     else
     {
         let url=URL.createObjectURL(new Blob(chunks))
-        let p = document.createElement("p")
-        p.style.color = "red"
-        p.style.width = "90%"
-        p.style.textAlign = 'left'
-        p.style.marginLeft = "9%"
-        p.style.marginTop = "2px"
-        p.style.padding = "5px"
-        p.style.backgroundColor = "wheat"
-        p.style.borderRadius = "10px"
-        p.innerHTML = `<strong>To ${document.getElementById('receiver').value}: </strong><br><a href=${url} download=${unique.split('$$$')[0]}>${unique.split('$$$')[0]}</a>`
+        p.childNodes[0].href=url
+        p.childNodes[0].download=file.name
+        div.style.width="100%"
+       
             //connection[rid].dc.send(p.innerText)
-        document.getElementById('commentbox').appendChild(p);
-        document.getElementById('commentbox').scrollTop=document.getElementById('commentbox').scrollHeight-document.getElementById('commentbox').offsetHeight
-        document.getElementById('file').value=""
+        
 
     }
   });
   const readSlice = o => {
-    console.log('readSlice ', o);
+    //console.log('readSlice ', o);
     const slice = file.slice(offset, o + chunkSize);
     fileReader.readAsArrayBuffer(slice);
   };
@@ -751,11 +860,11 @@ window.onresize=function()
             
         </form>
         <div id='btns'>
-        <div style={{margin:"5px",borderRadius:"50%",width:"40px",height:"40px",position:"relative",zIndex:"-1"}} className="btn btn-danger" onClick={change1} data-toggle="tooltip" title="present screen" ><i style={{fontSize:"150%",position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",color:"whitesmoke",backgroundColor:"transparent"}} class="fas fa-desktop"></i></div>
+        <button style={{margin:"5px",borderRadius:"50%",width:"40px",height:"40px",position:"relative"}} className="btn btn-danger" onClick={change1} data-toggle="tooltip" title="present screen" ><i style={{fontSize:"150%",position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",color:"whitesmoke",backgroundColor:"transparent"}} class="fas fa-desktop"></i></button>
 
-        <div style={{margin:"5px",borderRadius:"50%",width:"40px",height:"40px",position:"relative",zIndex:"-1"}} className="btn btn-danger" onClick={changeCamera} data-toggle="tooltip" title="switch camera" ><i style={{fontSize:"150%",position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",color:"whitesmoke",backgroundColor:"transparent"}} class="fas fa-sync"></i></div>
-        <div style={{margin:"5px",borderRadius:"50%",width:"40px",height:"40px",position:"relative",zIndex:"-1"}} className="btn btn-danger" id="switchaudio"><i style={{fontSize:"150%",position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",color:"whitesmoke",backgroundColor:"transparent"}} class="fas fa-microphone-slash"></i></div>
-        <div style={{margin:"5px",borderRadius:"50%",width:"40px",height:"40px",position:"relative",zIndex:"-1"}} className="btn btn-danger" id="switchvideo"><i style={{fontSize:"150%",position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",color:"whitesmoke",backgroundColor:"transparent"}} class="fas fa-video-slash"></i></div>
+        <button style={{margin:"5px",borderRadius:"50%",width:"40px",height:"40px",position:"relative"}} className="btn btn-danger" onClick={changeCamera} data-toggle="tooltip" title="switch camera" ><i style={{fontSize:"150%",position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",color:"whitesmoke",backgroundColor:"transparent"}} class="fas fa-sync"></i></button>
+        <button style={{margin:"5px",borderRadius:"50%",width:"40px",height:"40px",position:"relative"}} className="btn btn-danger" id="switchaudio"><i style={{fontSize:"150%",position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",color:"whitesmoke",backgroundColor:"transparent"}} class="fas fa-microphone-slash"></i></button>
+        <button style={{margin:"5px",borderRadius:"50%",width:"40px",height:"40px",position:"relative"}} className="btn btn-danger" id="switchvideo"><i style={{fontSize:"150%",position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",color:"whitesmoke",backgroundColor:"transparent"}} class="fas fa-video-slash"></i></button>
         
         
 
@@ -785,27 +894,29 @@ window.onresize=function()
         <div id="div2" className="m-fadeOut" style={{width:"98vw",position:"absolute",left:"50%",transform:"translateX(-50%)",bottom:"5px",zIndex:"100"}}>
         
         <div id="commentbox" style={{position:"relative",width:"100%",height:"40vh",backgroundColor:"whitesmoke",marginLeft:"50%",transform:"translateX(-50%)",overflowY:"scroll"}}>
-        <strong style={{fontSize:"1.5em"}}>Select receiver: </strong> 
-        <select style={{position:"absolute",left:"5px",bottom:"5px"}} name="receiver" id="receiver" style={{padding:"3px"}}>
-                <option value="" >All</option>
-            </select>
-        <div style={{position:"absolute",left:"0",bottom:"0"}} className="btn-group-sm">
-            <button className="btn-sm btn-primary" onClick={()=>{
-                document.getElementById('send').style.visibility="visible"
-                document.getElementById('fileform').style.visibility="hidden"
-            }}>text</button>
-            <button className="btn-sm btn-danger" onClick={()=>{
-
-                document.getElementById('send').style.visibility="hidden"
-                document.getElementById('fileform').style.visibility="visible"
-            }}>file</button>
-        </div>
+        
+        
 
 </div>
 {/* <form onSubmit={sendmessage} method="dialog"> */}
             <center>
                 <div style={{width:"100%",heigth:"70px",padding:"0",position:"relative"}}>
-                <textarea  style={{width:"100%",height:"70px",visibility:"visible"}} id="send" placeholder="write message and press enter to send!" onKeyPress={(event)=>{if(event.which===13){console.log(event.which);sendmessage()}}}></textarea>
+                <div style={{position:"absolute",left:"0",top:"-100%",transform:"translateY(100%)"}} className="btn-group-sm">
+            <button className="btn-sm btn-primary hovers" onClick={()=>{
+                document.getElementById('send').style.visibility="visible"
+                document.getElementById('fileform').style.visibility="hidden"
+            }}>text</button>
+            <button className="btn-sm btn-danger hovers" onClick={()=>{
+
+                document.getElementById('send').style.visibility="hidden"
+                document.getElementById('fileform').style.visibility="visible"
+            }}>file</button>
+            {/* <strong className="hovers" style={{fontSize:"1.5em"}}>Receiver: </strong>  */}
+        <select className="hovers" data-toggle="tooltip" title="select receiver" style={{position:"absolute",left:"5px",bottom:"5px",width:"30px"}} name="receiver" id="receiver" style={{padding:"3px"}}>
+                <option value="" >All</option>
+        </select>
+        </div>
+                <textarea  style={{width:"100%",height:"67px",visibility:"visible"}} id="send" placeholder="write message and press enter to send!" onKeyPress={(event)=>{if(event.which===13){console.log(event.which);sendmessage()}}}></textarea>
                 <div id="fileform" style={{visibility:"hidden",position:"absolute",top:"0",left:"0",width:"100%",backgroundColor:"gray"}}>
                     <form className="form-inline" onSubmit={sendFile} method="dialog" >
                         <div className="form-group">
@@ -846,7 +957,7 @@ window.onresize=function()
 
         </div>
         </div>
-        <button onClick={toggle} className="btn btn-primary" style={{position:"absolute",bottom:"10px",right:"10px",zIndex:"100"}}><i id="up" style={{fontSize:"30px"}} class="fa fa-chevron-circle-up" data-toggle="tooltip" title="open message panel" aria-hidden="true"></i></button>
+        <button onClick={toggle} className="btn btn-primary hovers" style={{position:"absolute",bottom:"10px",right:"10px",zIndex:"100"}}><i id="up" style={{fontSize:"30px"}} class="fa fa-chevron-circle-up" data-toggle="tooltip" title="open message panel" aria-hidden="true"></i></button>
         
        
         </>
